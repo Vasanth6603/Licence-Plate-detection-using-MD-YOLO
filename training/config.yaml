@@ -1,0 +1,39 @@
+# YOLOv9 training configuration for license plate detection
+
+# Data
+train: data/train/images
+val: data/valid/images
+test: data/test/images
+
+nc: 1
+names: ['licence']
+
+# Hyperparameters
+hyp:
+  lr0: 0.01
+  lrf: 0.01
+  momentum: 0.937
+  weight_decay: 0.0005
+  warmup_epochs: 3.0
+  warmup_bias_lr: 0.1
+  box: 7.5
+  cls: 0.5
+  dfl: 1.5
+  pose: 12.0
+  kobj: 2.0
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  degrees: 0.0
+  translate: 0.1
+  scale: 0.5
+  shear: 0.0
+  perspective: 0.0
+  flipud: 0.0
+  fliplr: 0.5
+  mosaic: 1.0
+  mixup: 0.0
+  copy_paste: 0.0
+  auto_augment: randaugment
+  erasing: 0.4
+  crop_fraction: 1.0

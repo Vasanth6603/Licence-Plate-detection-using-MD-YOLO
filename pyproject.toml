@@ -1,0 +1,62 @@
+[project]
+name = "license-plate-detector"
+version = "1.0.0"
+description = "Production-grade license plate detection service using YOLOv9"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic-settings>=2.1.0",
+    "python-multipart>=0.0.6",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "opencv-python-headless>=4.8.0",
+    "numpy>=1.24.0",
+    "PyYAML>=6.0",
+    " Pillow>=10.0.0",
+    "tqdm>=4.65.0",
+    "python-dotenv>=1.0.0",
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.24.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "I", "B", "C4", "UP", "PT"]
+ignore = ["E501", "B008"]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=api --cov=core --cov=training --cov-report=term-missing"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
