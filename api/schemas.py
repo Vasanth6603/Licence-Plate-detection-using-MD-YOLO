@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class DetectionOut(BaseModel):
-    """A single detected license plate."""
+    """A single detected license plate with OCR result."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -15,6 +15,8 @@ class DetectionOut(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Detection confidence")
     class_id: int = Field(..., description="Class id")
     class_name: str = Field(..., description="Class name")
+    plate_number: str = Field("", description="OCR extracted license plate number")
+    ocr_confidence: float = Field(0.0, description="OCR confidence score")
 
 
 class PredictResponse(BaseModel):
@@ -50,6 +52,7 @@ class HealthResponse(BaseModel):
     model_loaded: bool = Field(..., description="Whether the model is loaded")
     model_weights: str = Field(..., description="Path to model weights")
     device: str = Field(..., description="Torch device in use")
+    ocr_enabled: bool = Field(False, description="Whether OCR is enabled")
 
 
 class ErrorResponse(BaseModel):

@@ -77,19 +77,22 @@ def create_app() -> FastAPI:
     @app.get("/health", response_model=HealthResponse, tags=["health"])
     def health() -> HealthResponse:
         detector = get_detector()
+        from core.ocr import ocr_engine
+
         return HealthResponse(
             status="ok" if detector.is_loaded() else "degraded",
             version=settings.app_version,
             model_loaded=detector.is_loaded(),
             model_weights=str(settings.model_weights),
             device=settings.device,
+            ocr_enabled=ocr_engine.is_available(),
         )
 
     @app.get("/model/info", response_model=ModelInfoResponse, tags=["model"])
     def model_info() -> ModelInfoResponse:
         detector = get_detector()
         return ModelInfoResponse(
-            name="yolov9-e",
+            name="yolov9-e + easyocr",
             version=settings.app_version,
             classes=list(detector._names.values()) if detector.is_loaded() else [],
             img_size=detector.img_size,

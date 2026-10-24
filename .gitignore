@@ -14,6 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
+lib/
+lib64/
 parts/
 sdist/
 var/
@@ -46,52 +48,12 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
 # Jupyter Notebook
 .ipynb_checkpoints
 
 # IPython
 profile_default/
 ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
 
 # Environments
 .env
@@ -109,9 +71,6 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -120,13 +79,16 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Thumbnails
-._*
 
 # Windows
 Thumbs.db
@@ -135,24 +97,66 @@ Desktop.ini
 $RECYCLE.BIN/
 *.lnk
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Logs
+*.log
+logs/
 
-# Model weights & data (use DVC / Git LFS)
+# Model weights & large files (use Git LFS or DVC)
 *.pt
 *.pth
 *.onnx
 *.engine
-*.cache
-data/
+*.trt
+*.tflite
+*.mlmodel
+*.h5
+*.ckpt
+
+# Datasets (DO NOT COMMIT - large files)
 dataset/
+data/
+datasets/
+
+# Training outputs
 runs/
+wandb/
+mlruns/
+output/
+outputs/
 
-# Logs
-*.log
+# Sample/test media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tiff
+*.webp
+download.jpg
+sam.jpg
+samp.png
+sample1.mp4
 
-# Environment
-.env
+# Notebooks (keep only production code)
+*.ipynb
+Untitled.ipynb
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS generated files
+.directory
+.trash
+
+# UV/Poetry
+poetry.lock
+uv.lock
+Pipfile.lock

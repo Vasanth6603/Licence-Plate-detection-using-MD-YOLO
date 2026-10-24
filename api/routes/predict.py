@@ -5,6 +5,7 @@ from loguru import logger
 
 from api.schemas import PredictResponse
 from core.detector import Detector
+from core.ocr import ocr_engine
 from core.postprocessing import InferenceResult
 from core.preprocessing import PreprocessingError, load_image
 
@@ -13,7 +14,7 @@ async def handle_predict(
     file: UploadFile,
     detector: Detector,
 ):
-    """Detect license plates in a single uploaded image."""
+    """Detect license plates and extract numbers in a single uploaded image."""
     # Validate content type
     content_type = file.content_type or ""
     if not content_type.startswith("image/"):
@@ -23,11 +24,11 @@ async def handle_predict(
         )
 
     # Read bytes with size limit
-    max_bytes = 10 * 1024 * 1024  # 10 MB, overridable via settings
+    max_bytes = 10 * 1024 * 1024  # 10 MB
     try:
         contents = await file.read()
-    except Exception as exc:  # pragma: no cover
-        logger.error("Failed to read upload: {}", exc)
+    except Exception:
+        logger.error("Failed to read upload")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not read uploaded file",
@@ -63,8 +64,33 @@ async def handle_predict(
             detail="Inference failed",
         ) from None
 
+    # Run OCR on each detected plate
+    detections_out = []
+    for det in result.detections:
+        plate_number = ""
+        ocr_conf = 0.0
+        if ocr_engine.is_available():
+            try:
+                x1, y1, x2, y2 = int(det.x1), int(det.y1), int(det.x2), int(det.y2)
+                pad = 5
+                h, w = image.shape[:2]
+                x1_p = max(0, x1 - pad)
+                y1_p = max(0, y1 - pad)
+                x2_p = min(w, x2 + pad)
+                y2_p = min(h, y2 + pad)
+                plate_crop = image[y1_p:y2_p, x1_p:x2_p]
+                if plate_crop.size > 0:
+                    plate_number, ocr_conf = ocr_engine.read_plate(plate_crop)
+            except Exception as exc:
+                logger.warning("OCR failed for plate: {}", exc)
+
+        det_dict = det.to_dict()
+        det_dict["plate_number"] = plate_number
+        det_dict["ocr_confidence"] = ocr_conf
+        detections_out.append(det_dict)
+
     return PredictResponse(
-        detections=[d.to_dict() for d in result.detections],
+        detections=detections_out,
         image_width=result.image_width,
         image_height=result.image_height,
         inference_ms=result.inference_ms,
@@ -92,11 +118,33 @@ async def handle_predict_batch(files: list, detector: Detector):
             contents = await file.read()
             image = load_image(contents)
             result: InferenceResult = detector.predict(image)
+            detections_out = []
+            for det in result.detections:
+                plate_number = ""
+                ocr_conf = 0.0
+                if ocr_engine.is_available():
+                    try:
+                        x1, y1, x2, y2 = int(det.x1), int(det.y1), int(det.x2), int(det.y2)
+                        pad = 5
+                        h, w = image.shape[:2]
+                        x1_p = max(0, x1 - pad)
+                        y1_p = max(0, y1 - pad)
+                        x2_p = min(w, x2 + pad)
+                        y2_p = min(h, y2 + pad)
+                        plate_crop = image[y1_p:y2_p, x1_p:x2_p]
+                        if plate_crop.size > 0:
+                            plate_number, ocr_conf = ocr_engine.read_plate(plate_crop)
+                    except Exception as exc:
+                        logger.warning("OCR failed for plate: {}", exc)
+                det_dict = det.to_dict()
+                det_dict["plate_number"] = plate_number
+                det_dict["ocr_confidence"] = ocr_conf
+                detections_out.append(det_dict)
             results.append(
                 {
                     "filename": file.filename,
                     "success": True,
-                    "detections": [d.to_dict() for d in result.detections],
+                    "detections": detections_out,
                     "image_width": result.image_width,
                     "image_height": result.image_height,
                     "inference_ms": result.inference_ms,
