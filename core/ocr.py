@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 from loguru import logger
 
+from core.plate_rotation import get_rotated_variants, score_ocr_text
+
 
 class PlateOCR:
     """OCR engine for extracting license plate numbers."""
@@ -109,6 +111,43 @@ class PlateOCR:
         except Exception as exc:
             logger.error("OCR error: {}", exc)
             return "", 0.0
+
+    def read_plate_best(self, plate_img: np.ndarray) -> tuple[str, float]:
+        """Try multiple orientations and pick best OCR result for tilted plates."""
+        if not self.is_available():
+            return "", 0.0
+        try:
+            variants = get_rotated_variants(plate_img)
+            best_text = ""
+            best_conf = 0.0
+            best_score = -1.0
+            for variant, _ang in variants:
+                try:
+                    processed = self.preprocess_plate(variant)
+                    results = self._reader.readtext(processed)
+                    if not results:
+                        results = self._reader.readtext(variant)
+                    if not results:
+                        continue
+                    for _bbox, text, conf in results:
+                        cleaned = self.clean_plate_text(text)
+                        if not cleaned:
+                            continue
+                        c = float(conf)
+                        s = score_ocr_text(cleaned, c)
+                        if s > best_score:
+                            best_score = s
+                            best_text = cleaned
+                            best_conf = c
+                except Exception:
+                    continue
+            if best_text:
+                return best_text, round(float(best_conf), 4)
+            # Fallback to single pass
+            return self.read_plate(plate_img)
+        except Exception as exc:
+            logger.error("Multi-directional OCR error: {}", exc)
+            return self.read_plate(plate_img)
 
 
 # Global OCR instance

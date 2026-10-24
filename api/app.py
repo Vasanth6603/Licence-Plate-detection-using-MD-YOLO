@@ -55,7 +55,7 @@ def verify_api_key(api_key: str = Security(api_key_header)) -> str:
 def create_app() -> FastAPI:
     app = FastAPI(
         title="License Plate Detector API",
-        description="Production-grade YOLOv9 license plate detection service",
+        description="Production-grade YOLOv9 license plate detection + recognition with multi-directional alignment",
         version=settings.app_version,
         docs_url="/docs",
         redoc_url="/redoc",

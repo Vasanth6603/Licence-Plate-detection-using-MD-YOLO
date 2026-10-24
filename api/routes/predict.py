@@ -80,7 +80,7 @@ async def handle_predict(
                 y2_p = min(h, y2 + pad)
                 plate_crop = image[y1_p:y2_p, x1_p:x2_p]
                 if plate_crop.size > 0:
-                    plate_number, ocr_conf = ocr_engine.read_plate(plate_crop)
+                    plate_number, ocr_conf = ocr_engine.read_plate_best(plate_crop)
             except Exception as exc:
                 logger.warning("OCR failed for plate: {}", exc)
 
@@ -133,7 +133,7 @@ async def handle_predict_batch(files: list, detector: Detector):
                         y2_p = min(h, y2 + pad)
                         plate_crop = image[y1_p:y2_p, x1_p:x2_p]
                         if plate_crop.size > 0:
-                            plate_number, ocr_conf = ocr_engine.read_plate(plate_crop)
+                            plate_number, ocr_conf = ocr_engine.read_plate_best(plate_crop)
                     except Exception as exc:
                         logger.warning("OCR failed for plate: {}", exc)
                 det_dict = det.to_dict()
