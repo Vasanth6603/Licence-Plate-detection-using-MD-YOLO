@@ -6,22 +6,15 @@ from fastapi import Depends, FastAPI, File, HTTPException, Security, UploadFile,
 from fastapi.security import APIKeyHeader
 from starlette.middleware.cors import CORSMiddleware
 
+from api.routes import surveillance
 from api.schemas import HealthResponse, ModelInfoResponse
 from core.config import settings
 from core.detector import Detector, DetectorError
 
-# ---------------------------------------------------------------------------
-# Singleton detector instance
-# ---------------------------------------------------------------------------
-
 
 @lru_cache
 def get_detector() -> Detector:
-    """Return a cached, lazily-initialised detector.
-
-    If weights are missing the detector is returned un-loaded so the service
-    can still start and report a degraded health status.
-    """
+    """Return a cached, lazily-initialised detector."""
     detector = Detector()
     try:
         detector.load()
@@ -29,10 +22,6 @@ def get_detector() -> Detector:
         pass
     return detector
 
-
-# ---------------------------------------------------------------------------
-# Security
-# ---------------------------------------------------------------------------
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
@@ -47,11 +36,6 @@ def verify_api_key(api_key: str = Security(api_key_header)) -> str:
     return api_key or ""
 
 
-# ---------------------------------------------------------------------------
-# Application factory
-# ---------------------------------------------------------------------------
-
-
 def create_app() -> FastAPI:
     app = FastAPI(
         title="License Plate Detector API",
@@ -61,7 +45,6 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -69,10 +52,6 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
-
-    # ------------------------------------------------------------------
-    # Routes
-    # ------------------------------------------------------------------
 
     @app.get("/health", response_model=HealthResponse, tags=["health"])
     def health() -> HealthResponse:
@@ -130,6 +109,7 @@ def create_app() -> FastAPI:
 
         return await handle_predict_batch(files, detector)
 
+    app.include_router(surveillance.router)
     return app
 
 
