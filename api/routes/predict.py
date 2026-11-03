@@ -4,10 +4,32 @@ from fastapi import HTTPException, UploadFile, status
 from loguru import logger
 
 from api.schemas import PredictResponse
+from core.config import settings
 from core.detector import Detector
 from core.ocr import ocr_engine
 from core.postprocessing import InferenceResult
 from core.preprocessing import PreprocessingError, load_image
+
+
+def _max_upload_bytes() -> int:
+    return settings.max_upload_mb * 1024 * 1024
+
+
+async def _read_image_upload(file: UploadFile) -> bytes:
+    """Read one image upload while enforcing the configured byte limit."""
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=400, detail="Uploaded file must be an image")
+
+    limit = _max_upload_bytes()
+    contents = await file.read(limit + 1)
+    if len(contents) > limit:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File exceeds {settings.max_upload_mb} MB limit",
+        )
+    if not contents:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+    return contents
 
 
 async def handle_predict(
@@ -15,35 +37,16 @@ async def handle_predict(
     detector: Detector,
 ):
     """Detect license plates and extract numbers in a single uploaded image."""
-    # Validate content type
-    content_type = file.content_type or ""
-    if not content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file must be an image",
-        )
-
-    # Read bytes with size limit
-    max_bytes = 10 * 1024 * 1024  # 10 MB
     try:
-        contents = await file.read()
+        contents = await _read_image_upload(file)
+    except HTTPException:
+        raise
     except Exception:
-        logger.error("Failed to read upload")
+        logger.exception("Failed to read upload")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not read uploaded file",
         ) from None
-
-    if len(contents) > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File exceeds {max_bytes // (1024 * 1024)} MB limit",
-        )
-    if not contents:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file is empty",
-        )
 
     # Load and validate image
     try:
@@ -115,7 +118,7 @@ async def handle_predict_batch(files: list, detector: Detector):
             continue
 
         try:
-            contents = await file.read()
+            contents = await _read_image_upload(file)
             image = load_image(contents)
             result: InferenceResult = detector.predict(image)
             detections_out = []

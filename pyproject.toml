@@ -13,7 +13,7 @@ dependencies = [
     "opencv-python-headless>=4.8.0",
     "numpy>=1.24.0",
     "PyYAML>=6.0",
-    " Pillow>=10.0.0",
+    "Pillow>=10.0.0",
     "tqdm>=4.65.0",
     "python-dotenv>=1.0.0",
     "loguru>=0.7.0",
@@ -35,9 +35,15 @@ dev = [
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["api*", "core*", "db*", "schemas*", "services*", "streaming*", "training*", "workers*"]
+exclude = ["tests*"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "B", "C4", "UP", "PT"]
 ignore = ["E501", "B008"]
 

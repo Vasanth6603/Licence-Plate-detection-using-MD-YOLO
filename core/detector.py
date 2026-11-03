@@ -31,10 +31,10 @@ class Detector:
         self.weights = weights or settings.model_weights
         self.device = device or settings.device
         self.half = half if half is not None else settings.half
-        self.img_size = img_size or settings.img_size
+        self.img_size = img_size if img_size is not None else settings.img_size
         self.conf_thres = conf_thres if conf_thres is not None else settings.conf_thres
         self.iou_thres = iou_thres if iou_thres is not None else settings.iou_thres
-        self.max_det = max_det or settings.max_det
+        self.max_det = max_det if max_det is not None else settings.max_det
 
         self._model = None
         self._stride = 32
@@ -91,7 +91,7 @@ class Detector:
 
         conf_thres = conf_thres if conf_thres is not None else self.conf_thres
         iou_thres = iou_thres if iou_thres is not None else self.iou_thres
-        max_det = max_det or self.max_det
+        max_det = max_det if max_det is not None else self.max_det
 
         try:
             # Preprocess
@@ -117,6 +117,7 @@ class Detector:
             result = format_result(
                 raw_pred=pred.cpu().numpy(),
                 orig_shape=image.shape,
+                input_shape=(self.img_size, self.img_size),
                 names=self._names,
                 conf_thres=conf_thres,
                 iou_thres=iou_thres,

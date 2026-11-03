@@ -7,14 +7,7 @@ services:
       - .env
     volumes:
       - ./models:/app/models
-      - ./dataset:/app/dataset
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+      - ./yolov9:/app/yolov9:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s

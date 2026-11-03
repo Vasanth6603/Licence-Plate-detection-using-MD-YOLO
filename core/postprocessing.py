@@ -216,6 +216,7 @@ def format_result(
     iou_thres: float,
     max_det: int,
     inference_ms: float,
+    input_shape: tuple[int, int] = (640, 640),
 ) -> InferenceResult:
     """Run NMS and format raw model output into an InferenceResult."""
     pred = non_max_suppression(
@@ -237,9 +238,7 @@ def format_result(
 
     det = pred[0]
     # det columns: x1, y1, x2, y2, conf, class
-    det[:, :4] = scale_boxes(
-        (1, *orig_shape[::-1]), det[:, :4], orig_shape
-    )  # scale boxes to original image
+    det[:, :4] = scale_boxes(input_shape, det[:, :4], orig_shape)
 
     detections = []
     for *xyxy, conf, cls in det:

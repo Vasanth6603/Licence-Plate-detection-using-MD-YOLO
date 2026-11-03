@@ -46,6 +46,29 @@ def test_scale_boxes():
     assert scaled.shape == (1, 4)
 
 
+def test_format_result_scales_from_square_input():
+    pred = np.zeros((1, 1, 6), dtype=np.float32)
+    pred[0, 0] = [320, 320, 100, 100, 1.0, 0.9]
+
+    result = format_result(
+        raw_pred=pred,
+        orig_shape=(480, 640, 3),
+        names={0: "plate"},
+        conf_thres=0.25,
+        iou_thres=0.45,
+        max_det=100,
+        inference_ms=1.0,
+        input_shape=(640, 640),
+    )
+
+    assert result.num_detections == 1
+    detection = result.detections[0]
+    assert detection.x1 == 270
+    assert detection.y1 == 190
+    assert detection.x2 == 370
+    assert detection.y2 == 290
+
+
 def test_format_result_empty():
     pred = np.zeros((1, 100, 85), dtype=np.float32)
     result = format_result(

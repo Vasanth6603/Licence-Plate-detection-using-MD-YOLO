@@ -3,12 +3,18 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Centralised, typed configuration. All values overridable via env."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     # Application
     app_name: str = Field("license-plate-detector", description="Service name")
@@ -44,19 +50,6 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:8080"],
         description="Allowed CORS origins",
     )
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-
-    @field_validator("model_weights", "model_cfg", "data_yaml", mode="before")
-    @classmethod
-    def _resolve_paths(cls, v):
-        if isinstance(v, str):
-            return Path(v)
-        return v
-
 
 @lru_cache
 def get_settings() -> Settings:

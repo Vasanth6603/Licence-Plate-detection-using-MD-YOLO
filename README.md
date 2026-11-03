@@ -1,65 +1,50 @@
-# License Plate Detector - YOLOv9
+# License Plate Detector
 
-Production-grade YOLOv9 license plate detection service with FastAPI.
+FastAPI service for license plate detection with optional EasyOCR recognition. The API can start without model files; in that case `/health` reports `degraded` and inference requests fail until the YOLOv9 source and model weights are available.
 
-## Structure
+## Requirements
 
-```
-api/            FastAPI inference service (routes, schemas, deps)
-core/           Config, detector wrapper, pre/post-processing
-training/       Training CLI (extracted from notebook)
-models/         Model weights (Git LFS / DVC - not committed raw)
-data/           Raw and processed data (DVC managed)
-tests/          Unit and integration tests
-scripts/        Export, download, utility scripts
-notebooks/      Exploration only (not production code)
-```
+- Python 3.10 or newer
+- The YOLOv9 source tree at `./yolov9` (the `models.common.DetectMultiBackend` module)
+- Model weights at `./models/license_plate_detector.pt`
 
-## Quick Start
+The YOLOv9 source and model weights are external assets and are not included in this repository. Dataset and training assets are also not required to serve inference.
+
+## Run locally
 
 ```bash
-# 1. Install dependencies
-pip install -r requirements.txt
+python -m venv .venv
+# Activate the virtual environment for your shell, then:
+python -m pip install -r requirements.txt
+python -m pip install -e .
+uvicorn api.app:app --reload
+```
 
-# 2. Configure environment
-cp .env.example .env
-# Edit .env with your paths and API key
+Set configuration through environment variables or a local `.env` file. Start from `.env.example`. `API_KEY` is optional; when set, it is required on `/predict` and `/predict/batch`. `MAX_UPLOAD_MB` controls the per-image upload limit.
 
-# 3. Download model weights
-# Place license_plate_detector.pt in models/
+## Run with Docker Compose
 
-# 4. Run the API
-uvicorn api.main:app --reload
+Place the YOLOv9 source in `./yolov9` and weights in `./models/license_plate_detector.pt`, then run:
 
-# 5. Or with Docker
+```bash
 docker compose up --build
 ```
 
+Compose mounts the external model assets at their expected paths. Copy `.env.example` to `.env` before starting Compose. The service is CPU-compatible by default. Configure `DEVICE` for an available accelerator only when the container runtime and installed PyTorch build support it.
+
 ## API
 
-- `GET /health` - health check
-- `GET /model/info` - model metadata
-- `POST /predict` - single image inference (multipart file)
-- `POST /predict/batch` - batch inference
-- `GET /docs` - Swagger UI
+- `GET /health` — service and model readiness
+- `GET /model/info` — model metadata
+- `POST /predict` — single image inference (`multipart/form-data`, field `file`)
+- `POST /predict/batch` — multiple images (`multipart/form-data`, repeated field `files`)
+- `GET /docs` — interactive API documentation
 
-## Authentication
-
-Set `API_KEY` in `.env` and send `X-API-Key: <key>` header on inference endpoints.
-
-## Testing
+## Development
 
 ```bash
-pip install -r requirements-dev.txt
+python -m pip install -e ".[dev]"
 pytest
-```
-
-## Linting / Type Checking
-
-```bash
 ruff check .
 ruff format --check .
-mypy .
-black --check .
-isort --check .
 ```
